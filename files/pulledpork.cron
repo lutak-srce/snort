@@ -1,0 +1,2 @@
+#Update Snort Rules
+0 2 * * *  /usr/bin/pulledpork.pl -c /etc/pulledpork/pulledpork.conf -H -v >> /var/log/pulledpork.log 2>&1 
