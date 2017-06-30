@@ -14,6 +14,7 @@ class snort (
   $ftp_servers         = $::snort::params::ftp_servers,
   $telnet_servers      = $::snort::params::telnet_servers,
   $oinkcode            = $::snort::params::oinkcode,
+  $snortrules_snapshot = $::snort::params::snortrules_snapshot,
   $ppork_ignore        = $::snort::params::ppork_ignore,
   ) inherits snort::params {
   package { 'snort':

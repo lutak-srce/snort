@@ -3,8 +3,9 @@
 # This module manages snort package
 #
 class snort::pulledpork (
-  $oinkcode       = $snort::params::oinkcode,
-  $ppork_ignore   = $snort::params::ppork_ignore,
+  $oinkcode            = $snort::params::oinkcode,
+  $snortrules_snapshot = $snort::params::snortrules_snapshot,
+  $ppork_ignore        = $snort::params::ppork_ignore,
 ) inherits snort::params {
   package { 'pulledpork':
     ensure  => present,
