@@ -1,97 +1,80 @@
-# Class: snort
+#
+# = Class: snort
 #
 # This module manages snort package
 #
 class snort (
-  $snort_conf_template = 'snort/snort.conf.erb',
-  $logdir              = $::snort::params::logdir,
-  $interfaces          = $::snort::params::interfaces,
-  $home_net            = $::snort::params::home_net,
-  $dns_servers         = $::snort::params::dns_servers,
-  $smtp_servers        = $::snort::params::smtp_servers,
-  $http_servers        = $::snort::params::http_servers,
-  $sql_servers         = $::snort::params::sql_servers,
-  $ftp_servers         = $::snort::params::ftp_servers,
-  $telnet_servers      = $::snort::params::telnet_servers,
-  $oinkcode            = $::snort::params::oinkcode,
-  $snortrules_snapshot = $::snort::params::snortrules_snapshot,
-  $ppork_ignore        = $::snort::params::ppork_ignore,
-  ) inherits snort::params {
+  $snort_conf_template   = 'snort/snort.conf.erb',
+  $threshold_conf_source = 'puppet:///modules/snort/threshold.conf',
+  $local_conf_source     = 'puppet:///modules/snort/local.conf',
+  $local_rules_source    = 'puppet:///modules/snort/local.rules',
+  $snortd_initrc_source  = 'puppet:///modules/snort/snortd',
+  $logdir                = $::snort::params::logdir,
+  $interfaces            = $::snort::params::interfaces,
+  $home_net              = $::snort::params::home_net,
+  $dns_servers           = $::snort::params::dns_servers,
+  $smtp_servers          = $::snort::params::smtp_servers,
+  $http_servers          = $::snort::params::http_servers,
+  $sql_servers           = $::snort::params::sql_servers,
+  $ftp_servers           = $::snort::params::ftp_servers,
+  $telnet_servers        = $::snort::params::telnet_servers,
+  $oinkcode              = $::snort::params::oinkcode,
+  $snortrules_snapshot   = $::snort::params::snortrules_snapshot,
+  $ppork_ignore          = $::snort::params::ppork_ignore,
+) inherits snort::params {
+
   package { 'snort':
     ensure  => present,
   }
+
+  File {
+    ensure  => file,
+    owner   => root,
+    group   => root,
+    mode    => '0644',
+    require => Package['snort'],
+    notify  => Service['snortd'],
+  }
+
   file { '/etc/snort/snort.conf':
-    ensure  => present,
-    owner   => root,
-    group   => root,
-    mode    => '0644',
     content => template($snort_conf_template),
-    require => Package['snort'],
-    notify  => Service['snortd'],
   }
+
   file { '/etc/snort/threshold.conf':
-    ensure  => present,
-    owner   => root,
-    group   => root,
-    mode    => '0644',
-    source  => [
-      'puppet:///private/snort/threshold.conf',
-      'puppet:///modules/snort/threshold.conf',
-    ],
-    require => Package['snort'],
-    notify  => Service['snortd'],
+    source => $threshold_conf_path,
   }
+
   file { '/etc/sysconfig/snort':
-    ensure  => present,
-    owner   => root,
-    group   => root,
-    mode    => '0644',
     content => template('snort/snort.sysconfig.erb'),
-    require => Package['snort'],
-    notify  => Service['snortd'],
   }
+
   file { '/etc/snort/local.conf':
-    ensure  => present,
-    owner   => root,
-    group   => root,
-    mode    => '0644',
-    source  => [
-      'puppet:///private/snort/local.conf',
-      'puppet:///modules/snort/local.conf',
-    ],
-    require => [ Package['snort'], File['/etc/snort/snort.conf'] ],
-    notify  => Service['snortd'],
+    source  => $local_conf_source,
+    require => File['/etc/snort/snort.conf'],
   }
+
   file { '/etc/snort/rules/local.rules':
-    ensure  => present,
-    owner   => root,
-    group   => root,
-    mode    => '0644',
-    source  => [
-      'puppet:///private/snort/local.rules',
-      'puppet:///modules/snort/local.rules',
-    ],
-    require => [ Package['snort'], File['/etc/snort/local.conf'] ],
-    notify  => Service['snortd'],
+    source  => $local_rules_source,
+    require => File['/etc/snort/local.conf'],
   }
-  file { $logdir:
+
+  file { '/var/log/snort':
     ensure  => directory,
-    owner   => snortd,
-    group   => snortd,
+    path    => $logdir,
+    owner   => 'snortd',
+    group   => 'snortd',
     mode    => '0750',
-    require => Package['snort'],
   }
+
   file { '/etc/init.d/snortd':
-    ensure => present,
-    owner  => root,
-    group  => root,
     mode   => '0755',
-    source => 'puppet:///modules/snort/snortd',
-    notify => Service['snortd'],
+    source => $snortd_initrc_source,
   }
+
   service { 'snortd':
     ensure  => running,
     enable  => true,
     require => File[$logdir, '/etc/snort/rules/local.rules', '/etc/init.d/snortd' ],
   }
+
 }
